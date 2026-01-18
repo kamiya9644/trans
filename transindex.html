@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>作業報告フォーム</title>
+    <script src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f4f4f4; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input, select, textarea { width: 100%; padding: 10px; box-sizing: border-box; border: 1px solid #ccc; border-radius: 5px; }
+        button { width: 100%; padding: 15px; background: #00b900; color: white; border: none; border-radius: 5px; font-size: 16px; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h2>作業報告入力</h2>
+    <form id="reportForm">
+        <div class="form-group">
+            <label>積日</label>
+            <input type="date" id="date" required>
+        </div>
+        <div class="form-group">
+            <label>店舗名</label>
+            <select id="store_id" required>
+                <option value="S001">店舗A (S001)</option>
+                <option value="S002">店舗B (S002)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>積込先</label>
+            <input type="text" id="loading_point" placeholder="例：〇〇倉庫" required>
+        </div>
+        <div class="form-group">
+            <label>納品先</label>
+            <input type="text" id="delivery_point" placeholder="例：△△店" required>
+        </div>
+        <div class="form-group">
+            <label>車両</label>
+            <select id="vehicle_id" required>
+                <option value="V001">品川500 あ 12-34 (2t)</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>備考</label>
+            <textarea id="remarks"></textarea>
+        </div>
+        <button type="submit">報告を送信する</button>
+    </form>
+
+    <script>
+        const WEBHOOK_URL = "ここにMakeのWebhook URLを貼り付け";
+        const LIFF_ID = "ここにLINEで発行したLIFF IDを貼り付け";
+
+        async function main() {
+            await liff.init({ liffId: LIFF_ID });
+            if (!liff.isLoggedIn()) {
+                liff.login();
+            }
+            
+            // 今日の日付を初期値に設定
+            document.getElementById('date').valueAsDate = new Date();
+        }
+
+        document.getElementById('reportForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const profile = await liff.getProfile();
+            
+            const data = {
+                userId: profile.userId,
+                date: document.getElementById('date').value,
+                storeId: document.getElementById('store_id').value,
+                loadingPoint: document.getElementById('loading_point').value,
+                deliveryPoint: document.getElementById('delivery_point').value,
+                vehicleId: document.getElementById('vehicle_id').value,
+                remarks: document.getElementById('remarks').value
+            };
+
+            const response = await fetch(WEBHOOK_URL, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(data)
+            });
+
+            if (response.ok) {
+                alert('報告が完了しました。');
+                liff.closeWindow();
+            } else {
+                alert('送信に失敗しました。');
+            }
+        });
+
+        main();
+    </script>
+</body>
+</html>
